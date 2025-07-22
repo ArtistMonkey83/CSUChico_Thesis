@@ -11,15 +11,15 @@ time_2_22v = data_2_22v(:,1);
 time_2_3v  = data_2_3v(:,1);
 time_2_97v = data_2_97v(:,1);
 
-2_22vnorm = minmax_norm(data_2_22v(:,2));
-2_3vnorm  = minmax_norm(data_2_3v(:,2));
-2_97vnorm = minmax_norm(data_2_97v(:,2));
+v2_22vnorm = minmax_norm(data_2_22v(:,2));
+v2_3vnorm  = minmax_norm(data_2_3v(:,2));
+v2_97vnorm = minmax_norm(data_2_97v(:,2));
 
 % Plot all on one graph
 figure;
-plot(time_2_22v, 2_22vnorm, 'b-', 'DisplayName', '2.22 V'); hold on;
-plot(time_2_3v,  2_3vnorm,  'r-', 'DisplayName', '2.3 V');
-plot(time_2_97v, 2_97vnorm, 'g-', 'DisplayName', '2.97 V');
+plot(time_2_22v, v2_22vnorm, 'b-', 'DisplayName', '2.22 V'); hold on;
+plot(time_2_3v,  v2_3vnorm,  'r-', 'DisplayName', '2.3 V');
+plot(time_2_97v, v2_97vnorm, 'g-', 'DisplayName', '2.97 V');
 hold off;
 xlabel('Time (s)');
 ylabel('Normalized Measurement');
