@@ -4,7 +4,7 @@
 clear; clc; close all;
 
 % *********** Load .txt data ***********
-filename = 'Batt25uMA_2_30v_bode.txt';
+filename = 'Batt25uMA_2_22v_bode.txt';
 data = readtable(filename, 'FileType', 'text', 'Delimiter', '\t', 'VariableNamingRule', 'preserve');
 
 % *********** Extract all columns ***********

@@ -1,12 +1,15 @@
+
 % EECE 699T Applied MS Thesis
 % ID # 011234614 Yolie Reyes 7-22-2025
 
-clear all; clc;close all;
+clear all; clc; close all;
 
 % *********** Load data ***********
-data_2_22v = load('batt25uMA_2_22v_1800_1.txt');
-data_2_3v  = load('batt25uMA_2_3v_1800_3.txt');
-data_2_97v = load('batt25uM_2_97v_1800_3.txt');
+Rdata_1_91v = load('batt25uMA_1_91v_1800.txt');
+Rdata_2_09v = load('batt25uMA_2_09v_1800_2.txt');
+Rdata_2_22v = load('batt25uMA_2_22v_1800_1.txt');
+Rdata_2_3v  = load('batt25uMA_2_3v_1800_2.txt');
+Rdata_2_49v = load('25uMA_2_49v_1800.txt');
 
 % *********** Custom color map (DT, MDT, T, MLT, LT) ***********
 customColorsT = [...
@@ -17,48 +20,63 @@ customColorsT = [...
     162, 247, 245   % LT
 ] / 255;
 
-% *********** Plot Line Thickness ***********
-thick = 2.5;
+customColorsP = [...
+    68, 10, 107;    % DP
+    100, 12, 158;   % MDP
+    139, 31, 212;   % PURPLE
+    199, 123, 250;  % MLP
+    220, 182, 245   % LP
+] / 255;
+
+% *********** Plot Line Thickness and Font Sizes ***********
+thick  = 2.5;
+fsize  = 16;
+fsizet = 20;
+fname = 'Futura';
 
 % *********** Define min-max normalization ***********
 minmax_norm = @(x) (x - min(x)) / (max(x) - min(x));
 
 % *********** Extract x (cm^-1) and normalized y (Intensity) ***********
-x_2_22v = data_2_22v(:,1);
-x_2_3v  = data_2_3v(:,1);
-x_2_97v = data_2_97v(:,1);
+x_data = {
+    Rdata_1_91v(:,1), Rdata_2_09v(:,1), Rdata_2_22v(:,1), Rdata_2_3v(:,1), Rdata_2_49v(:,1)
+};
+y_data = {
+    minmax_norm(Rdata_1_91v(:,2)),
+    minmax_norm(Rdata_2_09v(:,2)),
+    minmax_norm(Rdata_2_22v(:,2)),
+    minmax_norm(Rdata_2_3v(:,2)),
+    minmax_norm(Rdata_2_49v(:,2))
+};
 
-v2_22vnorm = minmax_norm(data_2_22v(:,2));
-v2_3vnorm  = minmax_norm(data_2_3v(:,2));
-v2_97vnorm = minmax_norm(data_2_97v(:,2));
+labels = {'1.91 V', '2.09 V', '2.22 V', '2.3 V', '2.49 V'};
 
-% ***********  Vertical offsets ***********
-offsetStep = 0.5; % Amount of space between traces (change if you want)
-offsets = [0, offsetStep, 2*offsetStep];
+% *********** Vertical offsets ***********
+offsetStep = 0.5;
+offsets = offsetStep * (0:length(x_data)-1);
 
-% ***********  Plot with offsets *********** 
+% *********** Plot Raman with offsets ***********
 figure;
-plot(x_2_22v, v2_22vnorm + offsets(1), '-', 'Color', customColorsT(1,:), 'LineWidth', thick, 'DisplayName', '2.22 V'); hold on;
-plot(x_2_3v,  v2_3vnorm  + offsets(2), '-', 'Color', customColorsT(2,:), 'LineWidth', thick, 'DisplayName', '2.3 V');
-plot(x_2_97v, v2_97vnorm + offsets(3), '-', 'Color', customColorsT(3,:), 'LineWidth', thick, 'DisplayName', '2.97 V');
+hold on;
+for k = 1:length(x_data)
+    colorIdx = min(k, size(customColorsT,1)); % avoid index error
+    plot(x_data{k}, y_data{k} + offsets(k), '-', ...
+        'Color', customColorsT(colorIdx,:), ...
+        'LineWidth', thick, ...
+        'DisplayName', labels{k});
+end
 hold off;
 
-% ***********  Title variable *********** 
+% *********** Title and Axis Labels ***********
 titleStr = 'Glow Grid 2.5 \muM: Battery A';
-
-% *********** Set font and size for title only ***********
 h_title  = title(titleStr);
-
-set(h_title, 'FontName', 'Times New Roman', 'FontSize', 18);
-
-% ***********  Set font for title and axes labels ***********
 h_xlabel = xlabel('Raman Shift (cm^{-1})');
 h_ylabel = ylabel('Normalized Intensity (counts) with 0.5 offset');
-h_title  = title(titleStr);
-set([h_xlabel h_ylabel h_title], 'FontName', 'Times New Roman', 'FontSize', 14);
+set([h_xlabel h_ylabel h_title], 'FontName', fname, 'FontSize', fsize);
 
 legend('show');
 grid on;
 
-% *********** Adjust y-limits to fit all traces nicely ***********
-ylim([-0.1, 2*offsetStep + 1.07]);
+% *********** Adjust y-limits ***********
+ylim([-0.1, max(offsets) + 1.0]);
+
