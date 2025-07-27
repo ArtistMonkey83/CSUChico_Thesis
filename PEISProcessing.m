@@ -1,89 +1,128 @@
 % EECE 699T Applied MS Thesis
-% ID # 011234614 Yolie Reyes 7-25-2025
+% ID # 011234614 Yolie Reyes 7-22-2025
 
-clear; clc; close all;
+clear all; clc; close all;
+
+% *********** Number of collections to process ***********
+NumCollects = 10;
 
 % *********** Load .txt data ***********
-filename = 'Batt25uMA_2_22v_bode.txt';
-data = readtable(filename, 'FileType', 'text', 'Delimiter', '\t', 'VariableNamingRule', 'preserve');
+dataFiles = {
+    '25uMA_1_7v.txt', '25uMA_1_8v.txt','25uMA_1_91v.txt', '25uMA_2_16v.txt', ...
+    '25uMA_2_20v.txt','25uMA_2_2v.txt', '25uMA_2_22v.txt', '25uMA_2_30v.txt', ...
+    '25uMA_2_3v.txt', '25uMA_2_41v.txt'
+};
 
-% *********** Extract all columns ***********
-freq  = data.("Freq (Hz)");
-zmod  = data.("Zmod (ohm)");
-zphz  = data.("Zphz (°)");
-zreal = data.("Zreal (ohm)");
-zimag = data.("-Zimag (ohm)");
+voltages = {'1.7V','1.8V','1.91V', '2.16V', '2.20V', '2.22V','2.30V', '2.30V', '2.41V', '2.41V'};
 
-% *********** Custom color map (DT, MDT, T, MLT, LT) ***********
-customColorsT = [...
-    9, 110, 106;    % DT
-    10, 153, 148;   % MDT
-    39, 214, 208;   % Teal
-    100, 250, 245;  % MLT
-    162, 247, 245   % LT
+% Ensure valid collection count
+NumCollects = min(NumCollects, length(dataFiles));
+dataFiles = dataFiles(1:NumCollects);
+voltages = voltages(1:NumCollects);
+
+% *********** Custom color maps ***********
+customColorsTnP = [...
+    9, 110, 106;
+    10, 153, 148;
+    39, 214, 208;
+    100, 250, 245;
+    162, 247, 245;
+    68, 10, 107;
+    100, 12, 158;
+    139, 31, 212;
+    199, 123, 250;
+    220, 182, 245
 ] / 255;
 
-% *********** Plot Line Thickness and Font Sizes ***********
+% *********** Plot Style ***********
 thick  = 2.5;
-fsize  = 16;
-fsizet = 20;
+fsize  = 14;
+fsizet = 18;
 fname = 'Futura';
 
-% *********** Remove outliers ***********
-outlierIdx_mod = isoutlier(zmod, 'movmedian', 3);
-outlierIdx_nyq = isoutlier(zreal, 'movmedian', 3);  % for Nyquist
+% *********** Estimate dynamic offsets (based on range instead of max) ***********
+zmodRange = zeros(1, NumCollects);
+zimagRange = zeros(1, NumCollects);
 
-% Cleaned data for Bode
-clean_freq  = freq(~outlierIdx_mod);
-clean_zmod  = zmod(~outlierIdx_mod);
-clean_zphz  = zphz(~outlierIdx_mod);
+for i = 1:NumCollects
+    T = readtable(dataFiles{i}, 'FileType', 'text');
+    zmodData = T{:,2};
+    zimagData = T{:,5};
+    zmodRange(i) = range(zmodData(~isnan(zmodData)));
+    zimagRange(i) = range(zimagData(~isnan(zimagData)));
+end
 
-% Cleaned data for Nyquist
-clean_zreal = zreal(~outlierIdx_nyq);
-clean_zimag = zimag(~outlierIdx_nyq);
+% Use scaled offset steps relative to the average range
+bodeStep = mean(zmodRange) * .5;
+nyquistStep = mean(zimagRange) * 1.25;
 
-% *********** Plot Bode and Nyquist in one figure ***********
-figure;
+bodeOffsets = bodeStep * (0:NumCollects-1);
+nyquistOffsets = nyquistStep * (0:NumCollects-1);
 
-% --- Subplot 1: Bode Plot (|Z| and Phase vs Frequency)
-subplot(2,1,1);
+% *********** Prepare figure ***********
+figure('Units','normalized','Position',[0.1, 0.1, 0.85, 0.75]);
 
-% Left axis (|Z|)
-yyaxis left;
-ax = gca;
-ax.YColor = customColorsT(1,:);  % match y-axis color to |Z| line
-semilogx(clean_freq, clean_zmod,...
-    'Color', customColorsT(1,:), ...
-    'LineWidth', thick, ...
-    'DisplayName', '|Z|');
-ylabel('|Z| (Ohms)', 'FontSize', fsize, 'FontName', 'fname');
+% *********** Subplot 1: Bode Plot ***********
+subplot(2, 1, 1); hold on;
 
-% Right axis (Phase)
-yyaxis right;
-ax = gca;
-ax.YColor = customColorsT(3,:);  % match y-axis color to Phase line
-semilogx(clean_freq, clean_zphz,...
-    'Color', customColorsT(3,:), ...
-    'LineWidth', thick, ...
-    'DisplayName', 'Phase');
-ylabel('Phase (°)', 'FontSize', fsize, 'FontName', 'fname');
+for i = 1:NumCollects
+    T = readtable(dataFiles{i}, 'FileType', 'text');
 
-xlabel('Frequency (Hz)', 'FontSize', fsize, 'FontName', 'fname');
-title('Bode Plot: |Z| and Phase vs Frequency', 'FontSize', fsizet, 'FontName', 'fname');
-xlim([min(clean_freq) max(clean_freq)]);
-legend('show');
+    freq  = T{:,1};
+    zmod  = T{:,2};
+    zphz  = T{:,3};
+
+    modOut = isoutlier(zmod, 'movmedian', 3);
+    clean_freq = freq(~modOut);
+    clean_zmod = zmod(~modOut);
+    clean_zphz = zphz(~modOut);
+
+    offset = bodeOffsets(i);
+    color  = customColorsTnP(i,:);
+
+    loglog(clean_freq, clean_zmod + offset, '-', ...
+        'Color', color, 'LineWidth', thick, ...
+        'DisplayName', ['|Z| @ ', voltages{i}]);
+
+    semilogx(clean_freq, clean_zphz + offset, ':', ...
+        'Color', color, 'LineWidth', thick, ...
+        'DisplayName', ['Phase @ ', voltages{i}]);
+end
+
+xlabel('Frequency (Hz)', 'FontSize', fsize, 'FontName', fname);
+ylabel('|Z| and Phase (offset)', 'FontSize', fsize, 'FontName', fname);
+title('Bode Plots (Log Scale) with Vertical Offsets', 'FontSize', fsizet, 'FontName', fname);
+legend('show', 'Location', 'eastoutside');
+grid on;
+set(gca, 'XScale', 'log');
+set(gca, 'YScale', 'linear');
+
+% *********** Subplot 2: Nyquist Plot ***********
+subplot(2, 1, 2); hold on;
+
+for i = 1:NumCollects
+    T = readtable(dataFiles{i}, 'FileType', 'text');
+
+    zreal = T{:,4};
+    zimag = T{:,5};
+
+    nyqOut = isoutlier(zreal, 'movmedian', 3);
+    clean_zreal = zreal(~nyqOut);
+    clean_zimag = zimag(~nyqOut);
+
+    offset = nyquistOffsets(i);
+    color  = customColorsTnP(i,:);
+
+    plot(clean_zreal, clean_zimag + offset, '-', ...
+        'Color', color, 'LineWidth', thick, ...
+        'DisplayName', ['Nyquist @ ', voltages{i}]);
+end
+
+xlabel('Z_{real} (\\Omega)', 'FontSize', fsize, 'FontName', fname);
+ylabel('-Z_{imag} (offset)', 'FontSize', fsize, 'FontName', fname);
+title('Nyquist Plots with Vertical Offsets', 'FontSize', fsizet, 'FontName', fname);
+legend('show', 'Location', 'eastoutside');
+axis tight;
 grid on;
 
-% --- Subplot 2: Nyquist Plot (Zreal vs -Zimag)
-subplot(2,1,2);
-plot(clean_zreal, clean_zimag,...
-    'Color', customColorsT(2,:), ...
-    'LineWidth', thick, ...
-    'DisplayName', 'Nyquist');
-xlabel('Z_{real} (\Omega)', 'FontSize', fsize, 'FontName', 'fname');
-ylabel('-Z_{imag} (\Omega)', 'FontSize', fsize, 'FontName', 'fname');
-title('Nyquist Plot', 'FontSize', fsizet, 'FontName', 'fname');
-xlim([min(clean_zreal) max(clean_zreal)]);
-axis equal;
-grid on;
-
+sgtitle('Offset Bode and Nyquist Plots (Log Scale)', 'FontSize', 20, 'FontWeight', 'bold');
