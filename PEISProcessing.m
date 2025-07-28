@@ -1,7 +1,7 @@
 % EECE 699T Applied MS Thesis
-% ID # 011234614 Yolie Reyes 7-27-2025
+% ID # 011234614 Yolie Reyes 7-28-2025
 
- clear all; clc; close all;
+clear; clc; close all;
 
 % *********** Number of collections to process ***********
 NumCollects = 10;
@@ -15,12 +15,7 @@ dataFiles = {
 
 voltages = {'1.7V','1.8V','1.91V', '2.16V', '2.20V', '2.22V','2.30V', '2.30V', '2.41V', '2.41V'};
 
-% Trim to NumCollects
-NumCollects = min(NumCollects, length(dataFiles));
-dataFiles = dataFiles(1:NumCollects);
-voltages = voltages(1:NumCollects);
-
-% *********** Custom color maps ***********
+% *********** Custom color map ***********
 customColorsTnP = [...
     9, 110, 106;
     10, 153, 148;
@@ -34,33 +29,31 @@ customColorsTnP = [...
     220, 182, 245
 ] / 255;
 
-% *********** Plot Style ***********
+% *********** Plot style ***********
 thick  = 2.0;
-fsize  = 12;
-fsizet = 16;
-fname  = 'Futura';
+fsize  = 8;
+fsizet = 10;
+fname  = 'Times New Roman';
 
-% *********** Estimate spacing for Nyquist offsets only ***********
+% *********** Estimate spacing for Nyquist offsets ***********
 zimagRange = zeros(1, NumCollects);
 for i = 1:NumCollects
     T = readtable(dataFiles{i}, 'FileType', 'text');
     zimagRange(i) = range(T{:,5}, 'omitnan');
 end
 
-nyquistStep = mean(zimagRange) * 1.25;
+nyquistStep = max(zimagRange) * 2;  % Increase spacing based on worst case
 nyquistOffsets = nyquistStep * (0:NumCollects-1);
 
-% *********** Prepare tiled layout ***********
-figure('Units','normalized','Position',[0.1, 0.1, 0.95, 0.85]);
-tiledlayout(ceil(NumCollects/2), 3, 'Padding', 'compact', 'TileSpacing', 'compact');
+% *********** Nyquist Plot (All in One Figure) ***********
+figure('Name', 'Nyquist Offset Plot', 'Color', 'w', ...
+       'Units', 'normalized', 'Position', [0.1 0.2 0.6 0.6]); 
+hold on;
 
-% *********** Shared Nyquist subplot (first col) ***********
-nexttile(1, [ceil(NumCollects/2),1]); hold on;
 for i = 1:NumCollects
     T = readtable(dataFiles{i}, 'FileType', 'text');
     zreal = T{:,4};
     zimag = T{:,5};
-
     valid = ~isoutlier(zreal, 'movmedian', 3);
     clean_zreal = zreal(valid);
     clean_zimag = zimag(valid);
@@ -71,45 +64,59 @@ for i = 1:NumCollects
         'Color', color, 'LineWidth', thick, ...
         'DisplayName', ['Nyquist @ ', voltages{i}]);
 end
+
 xlabel('Z_{real} (Ω)', 'FontSize', fsize, 'FontName', fname);
 ylabel('-Z_{imag} + offset', 'FontSize', fsize, 'FontName', fname);
 title('Nyquist Plots (Offset)', 'FontSize', fsizet, 'FontName', fname);
-set(gca, 'XLim', [0 inf]);
 legend('show', 'Location', 'eastoutside');
 grid on;
 
-% *********** Bode plots (cols 2 and 3) ***********
-for i = 1:NumCollects
-    col = 2 + mod(i-1,2); % col 2 or 3
-    row = ceil(i/2);
-    tileIndex = (row - 1) * 3 + col;
-    nexttile(tileIndex); hold on;
+% *********** Bode Plots: 5 per Figure ***********
+plotsPerFig = 5;
+numFigs = ceil(NumCollects / plotsPerFig);
 
-    T = readtable(dataFiles{i}, 'FileType', 'text');
-    freq  = T{:,1};
-    zmod  = T{:,2};
-    zphz  = T{:,3};
+for figIdx = 1:numFigs
+    figure('Name', ['Bode Group ', num2str(figIdx)], 'Color', 'w', ...
+           'Units', 'normalized', 'Position', [0.2 0.2 0.7 0.8]);
 
-    valid = ~isoutlier(zmod, 'movmedian', 3);
-    clean_freq = freq(valid);
-    clean_zmod = zmod(valid);
-    clean_zphz = zphz(valid);
-    color = customColorsTnP(i,:);
+    for plotIdx = 1:plotsPerFig
+        i = (figIdx - 1) * plotsPerFig + plotIdx;
+        if i > NumCollects, break; end
 
-    yyaxis left
-    semilogx(clean_freq, clean_zmod, '-', 'Color', color, 'LineWidth', thick);
-    ylabel('|Z| (Ω)', 'FontSize', fsize, 'FontName', fname);
-    set(gca, 'YColor', color);
+        % Load and clean data
+        T = readtable(dataFiles{i}, 'FileType', 'text');
+        freq  = T{:,1};
+        zmod  = T{:,2};
+        zphz  = T{:,3};
 
-    yyaxis right
-    semilogx(clean_freq, clean_zphz, ':', 'Color', color, 'LineWidth', thick);
-    ylabel('Phase (°)', 'FontSize', fsize, 'FontName', fname);
-    set(gca, 'YColor', color);
+        validZ = ~isoutlier(zmod, 'movmedian', 3);
+        validP = ~isoutlier(zphz, 'movmedian', 3);
+        valid = validZ & validP;
 
-    xlabel('Frequency (Hz)', 'FontSize', fsize, 'FontName', fname);
-    title(['Bode @ ', voltages{i}], 'FontSize', fsize, 'FontName', fname);
-    grid on;
+        clean_freq = freq(valid);
+        clean_zmod = zmod(valid);
+        clean_zphz = zphz(valid);
+        color = customColorsTnP(i,:);
+
+        % Subplot
+        subplot(5, 1, plotIdx);
+
+        yyaxis left
+        semilogx(clean_freq, clean_zmod, '-', ...
+            'Color', color, 'LineWidth', thick, 'DisplayName', '|Z|');
+        ylabel('|Z| (Ω)', 'FontSize', fsize, 'FontName', fname);
+        ax = gca; ax.YColor = color;
+
+        yyaxis right
+        semilogx(clean_freq, clean_zphz, ':', ...
+            'Color', color, 'LineWidth', thick, 'DisplayName', 'Phase');
+        ylabel('Phase (°)', 'FontSize', fsize, 'FontName', fname);
+        ax = gca; ax.YColor = color;
+
+        xlabel('Frequency (Hz)', 'FontSize', fsize, 'FontName', fname);
+        title(['Bode Plot @ ', voltages{i}], 'FontSize', fsizet, 'FontName', fname);
+        legend({'|Z|','Phase'}, 'Location', 'northeast');
+        grid on;
+    end
 end
 
-sgtitle('Bode and Nyquist Plots by Collection (No Offset for Bode)', ...
-    'FontSize', 20, 'FontWeight', 'bold', 'FontName', fname);
