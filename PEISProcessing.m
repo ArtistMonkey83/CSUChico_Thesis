@@ -1,5 +1,5 @@
 % EECE 699T Applied MS Thesis
-% ID # 011234614 Yolie Reyes 7-28-2025
+% ID # 011234614 Yolie Reyes 7-22-2025
 
 clear; clc; close all;
 
@@ -31,9 +31,9 @@ customColorsTnP = [...
 
 % *********** Plot style ***********
 thick  = 2.0;
-fsize  = 8;
-fsizet = 10;
-fname  = 'Times New Roman';
+fsize  = 18;
+fsizet = 20;
+fname  = 'Futura';
 
 % *********** Estimate spacing for Nyquist offsets ***********
 zimagRange = zeros(1, NumCollects);
@@ -67,7 +67,7 @@ end
 
 xlabel('Z_{real} (Ω)', 'FontSize', fsize, 'FontName', fname);
 ylabel('-Z_{imag} + offset', 'FontSize', fsize, 'FontName', fname);
-title('Nyquist Plots (Offset)', 'FontSize', fsizet, 'FontName', fname);
+title('Glow Grid 2.5 \muM: Battery A Nyquist Plots', 'FontSize', fsizet, 'FontName', fname);
 legend('show', 'Location', 'eastoutside');
 grid on;
 
@@ -120,3 +120,6 @@ for figIdx = 1:numFigs
     end
 end
 
+
+% sgtitle('Grouped Bode Plots by Voltage', ...
+%     'FontSize', 14, 'FontWeight', 'bold', 'FontName', fname);
