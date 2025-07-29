@@ -34,10 +34,10 @@ files = files(~contains({files.name}, 'S8'));
 
 % *********** Initialize figure 1: Sulfur-subtracted ***********
 figure(1); hold on;
-titleStr1 = 'Glow Grid 2.5\muM: Battery A (Sulfur-Subtracted)';
+titleStr1 = 'Glow Grid 2.5\muM: Battery D (Sulfur-Subtracted)';
 % *********** Initialize figure 2: Raw spectra ***********
 figure(2); hold on;
-titleStr2 = 'Glow Grid 2.5\muM: Battery A (Raw Spectra)';
+titleStr2 = 'Glow Grid 2.5\muM: Battery D (Raw Spectra)';
 
 for k = 1:length(files)
     data = load(files(k).name);
