@@ -2,7 +2,7 @@
 % EECE 699T Applied MS Thesis
 % ID # 011234614 Yolie Reyes 7-22-2025
 
-clear all; clc; close all;
+% clear all; clc; close all;
 
 % *********** Load data ***********
 Rdata_1_91v = load('batt25uMA_1_91v_1800.txt');
@@ -11,22 +11,34 @@ Rdata_2_22v = load('batt25uMA_2_22v_1800_1.txt');
 Rdata_2_3v  = load('batt25uMA_2_3v_1800_2.txt');
 Rdata_2_49v = load('25uMA_2_49v_1800.txt');
 
-% *********** Custom color map (DT, MDT, T, MLT, LT) ***********
+RdataS8 = load('S8_1800_1.txt')
+% *********** Custom color map ***********
 customColorsT = [...
     9, 110, 106;    % DT
     10, 153, 148;   % MDT
     39, 214, 208;   % T
     100, 250, 245;  % MLT
     162, 247, 245   % LT
-] / 255;
 
-customColorsP = [...
     68, 10, 107;    % DP
     100, 12, 158;   % MDP
     139, 31, 212;   % PURPLE
     199, 123, 250;  % MLP
-    220, 182, 245   % LP
+    220, 182, 245;   % LP
+
+    186, 120, 6;    % DO
+    214, 140, 13;   % MDO
+    242, 166, 34;   % ORANGE
+    245, 191, 97;  % MLO
+    245, 214, 161;   % LO
+
+    16, 67, 158;    % DB
+    27, 93, 207;   % MDB
+    48, 118, 240;   % BLUE
+    94, 152, 252;  % MLB
+    169, 200, 255   % LB
 ] / 255;
+
 
 % *********** Plot Line Thickness and Font Sizes ***********
 thick  = 2.5;
