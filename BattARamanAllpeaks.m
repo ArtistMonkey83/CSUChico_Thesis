@@ -1,6 +1,6 @@
 % EECE 699T MS Thesis
 % ID # 011234614 Yolie Reyes 7-30-2025
-% Raman Processing Battery 25µM A, SOME Annotated Peaks
+% Raman Processing Battery 25µM A, ALL Annotated Peaks
 % Centered Labels, Tight Y-Limits
 
 clear; clc; close all;

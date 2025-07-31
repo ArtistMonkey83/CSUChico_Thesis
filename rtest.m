@@ -1,7 +1,6 @@
-% EECE 699T MS Thesis
-% ID # 011234614 Yolie Reyes 7-30-2025
-% Raman Processing Battery 25µM A, SOME Annotated Peaks
-% Centered Labels, Tight Y-Limits
+% EECE 699T Applied MS Thesis
+% ID # 011234614 Yolie Reyes 7-28-2025
+% Raman Processing + Annotated Peaks + Centered Labels + Tight Y-Limits
 
 clear; clc; close all;
 
@@ -21,18 +20,19 @@ fname      = 'Futura';
 offsetStep = 1.5;
 
 % *********** Peak Positions ***********
-peakIndicator  = [108, 119, 184, 219, 268, 289, 355, 363, 401, 415, 445, 461, 472, 486];
-DFTcalculated  = [ 146, 156, 184, 328, 423, 455, 500, 507, 522, 543, 551];
+peakIndicator  = [108, 119, 184, 206, 215, 219, 227, 260, 355, 363, 402, 415, 445, 461, 477, 486];
+DFTcalculated  = [136, 146, 156, 184, 328, 423, 455, 500, 507, 522, 543, 551];
 
 % *********** Peak Labels ***********
 solidPeakLabel = {
-    'S_{7}^{2-}', 'S_{6}^{2-}', 'S_{3}^{2-} ', 'S_{8}^{2-}', 'LiTFSI', 'LiTFSI'...
-    'S_{6}^{2-}', 'S_{8}^{2-}', 'S_{7}^{2-}', 'S_{4}^{2-}+S_{6}^{2-}', 'S_{3}^{2-}+S_{4}^{2-}', ...
-    '  S_{4}^{2-}', 'S_{5}^{2-}', '   S_{7}^{2-}+S_{8}^{2-}'};
+    'S_{7}^{2-}', 'S_{6}^{2-}', 'S_{5}^{2-}', 'S_{3}^{2-}', 'S_{8}^{2-}', ...
+    'S_{8}^{2-}', 'S_{5}^{2-}', 'S_{6}^{2-}', 'S_{6}^{2-}', 'S_{8}^{2-}', ...
+    'S_{7}^{2-}', 'S_{4}^{2-}+S_{6}^{2-}', 'S_{3}^{2-}+S_{4}^{2-}', ...
+    'S_{4}^{2-}', 'S_{5}^{2-}', 'S_{7}^{2-}+S_{8}^{2-}'};
 dotPeakLabel   = {
-    'S_{5}^{-}+S_{7}^{-} & S_{5}^{-}+S_{8}^{-}', ' ', ...
-    '          & S_{8}^{-}', 'S_{6}^{-}', '    S_{6}^{-}', '  S_{4}^{-}', 'S_{8}^{-}', 'S_{7}^{-}', ...
-    'S_{3}^{-}', 'S_{6}^{-}', 'S_{5}^{-}'};
+    'S_{5}^{-}+S_{7}^{-}', 'S_{8}^{-}', 'S_{5}^{-}+S_{8}^{-}', 'S_{8}^{-}', ...
+    'S_{6}^{-}', 'S_{6}^{-}', 'S_{4}^{-}', 'S_{8}^{-}', 'S_{7}^{-}', 'S_{3}^{-}', ...
+    'S_{6}^{-}', 'S_{5}^{-}', 'S_{5}^{-}', 'S_{6}^{-}', 'S_{5}^{-}', 'S_{7}^{-}+S_{8}^{-}'};
 
 % *********** Label Styling ***********
 labelFont     = 'Futura';
@@ -55,12 +55,10 @@ files = dir('*.txt');
 files = files(~contains({files.name}, 'S8'));
 
 % *********** Prepare Figures ***********
-figure(1); hold on;
-title('Glow Grid 2.5\muM: Battery A (Sulfur-Subtracted)', ...
-    'FontName', fname, 'FontSize', fsizet);
-figure(2); hold on;
-title('Glow Grid 2.5\muM: Battery A (Raw Spectra)', ...
-    'FontName', fname, 'FontSize', fsizet);
+figure(1); hold on; 
+title('Glow Grid 2.5\muM: Battery B (Sulfur-Subtracted)', 'FontName', fname, 'FontSize', fsizet);
+figure(2); hold on; 
+title('Glow Grid 2.5\muM: Battery B (Raw Spectra)',           'FontName', fname, 'FontSize', fsizet);
 
 % *********** Plot Spectra ***********
 for k = 1:numel(files)
@@ -69,10 +67,10 @@ for k = 1:numel(files)
     y      = d(:,2);
     y_s8_i = interp1(x_sulfur, y_sulfur, x, 'linear', 'extrap');
     
-    y_sub     = y - y_s8_i;
-    y_norm_sub= minmax_norm(y_sub);
-    y_norm_raw= minmax_norm(y);
-    offset    = (k-1)*offsetStep;
+    y_sub  = y - y_s8_i;
+    y_norm_sub = minmax_norm(y_sub);
+    y_norm_raw = minmax_norm(y);
+    offset = (k-1)*offsetStep;
     
     parts = split(files(k).name,'_');
     if numel(parts)>=3
@@ -86,76 +84,66 @@ for k = 1:numel(files)
     
     figure(1);
     plot(x, y_norm_sub+offset, '-', ...
-        'Color', thisColor, 'LineWidth', thick, ...
-        'DisplayName', lbl);    % for legend only
+        'Color', thisColor, 'LineWidth', thick, 'DisplayName', lbl);
     
     figure(2);
     plot(x, y_norm_raw+offset, '-', ...
-        'Color', thisColor, 'LineWidth', thick, ...
-        'DisplayName', lbl);
+        'Color', thisColor, 'LineWidth', thick, 'DisplayName', lbl);
 end
 
 % *********** Annotate Peaks & Tighten Y ***********
-labelGap = 0.2;  % room for labels above
+labelGap = 0.5;  % vertical padding above the top spectrum
+
 for figNum = [1,2]
     figure(figNum);
-    ax = gca; hold(ax,'on');
+    ax = gca;
+    hold(ax, 'on');
     
-    % compute top of spectra
+    % compute the highest offset
     maxOffset = (numel(files)-1)*offsetStep;
-    topData   = maxOffset + 1;
+    topData   = maxOffset + 1;  % spectra run 0→1
     
-    % expand y‐limits
-    ylim([0, topData+.4 + labelGap]);
+    % set y‐limits with extra padding
+    ylim([ 0, topData + labelGap ]);
     
-    % solid peaks
+    % solid‐line peaks (lines only up to topData)
     for i = 1:numel(peakIndicator)
         xval = peakIndicator(i);
         txt  = solidPeakLabel{i};
-        
-        % draw line up to topData
-        plot([xval xval], [0 topData+.2], '-', ...
+        % draw just‐below‐label vertical line
+        plot([xval xval], [0 topData], '-', ...
             'Color', colorSolid, ...
-            'LineWidth', thickSolid, ...
-            'HandleVisibility','off');
-        
-        % place label in the gap
-        text(xval, topData+.2 + labelGap/2, txt, ...
+            'LineWidth', thickSolid);
+        % draw label in the gap
+        text( xval, topData + labelGap/2, txt, ...
             'FontSize',     labelFontsize, ...
             'FontName',     labelFont, ...
             'Color',        colorSolid, ...
             'HorizontalAlignment','center', ...
             'VerticalAlignment','middle', ...
-            'Interpreter','tex', ...
-            'HandleVisibility','off');
+            'Interpreter','tex' );
     end
     
-    % dotted peaks
+    % dotted‐line peaks
     for i = 1:numel(DFTcalculated)
         xval = DFTcalculated(i);
         txt  = dotPeakLabel{i};
         plot([xval xval], [0 topData], ':', ...
             'Color', colorDot, ...
-            'LineWidth', thickDot, ...
-            'HandleVisibility','off');
-        text(xval, topData + labelGap/2, txt, ...
+            'LineWidth', thickDot);
+        text( xval, topData + labelGap/2, txt, ...
             'FontSize',     labelFontsize, ...
             'FontName',     labelFont, ...
             'Color',        colorDot, ...
             'HorizontalAlignment','center', ...
             'VerticalAlignment','middle', ...
-            'Interpreter','tex', ...
-            'HandleVisibility','off');
+            'Interpreter','tex' );
     end
     
-    % finalize
+    % axis labels & grid
     xlabel('Raman Shift (cm^{-1})',         ...
         'FontName', fname, 'FontSize', fsize);
     ylabel('Normalized Intensity + Offset', ...
         'FontName', fname, 'FontSize', fsize);
-    grid(ax,'on');
-    legend(ax,'show', ...
-        'Location','southoutside', ...
-        'NumColumns',3, ...
-        'FontSize',8);
+    grid(ax, 'on');
 end
