@@ -1,0 +1,72 @@
+%% PSTrace "Error%" -> 95% Confidence Intervals (ASSUMPTION-BASED) + CI Width Metrics
+% -------------------------------------------------------------------------
+% GOAL (workflow-friendly)
+%   1) Put all parameter values in ONE easy-to-edit table (ThetaHat + Error%)
+%   2) Compute SE, CI_Low, CI_High, Spread, HalfWidth automatically
+%   3) Make it trivial to paste in new rows for new SoC / new cells
+%
+% ASSUMPTION (explicit)
+%   PSTrace Error% is interpreted as Relative Standard Error (RSE):
+%     Error% = 100 * SE(theta_hat) / |theta_hat|
+%   => SE = |theta_hat| * Error% / 100
+%
+% CI MODEL
+%   95% CI: theta_hat ± t_{nu,0.975} * SE
+%   nu = 2*Nfreq - p  (complex EIS: real + imag)
+% -------------------------------------------------------------------------
+
+% clear; clc;
+
+%% ---------------- USER SETTINGS (edit here) ----------------
+Nfreq = 100;          % number of frequency points used in the fit (e.g., 100 or 113)
+p     = 5;            % number of fitted parameters in the model
+alpha = 0.05;         % 95% CI
+
+% Paste/update your parameters HERE (only this block changes per dataset)
+% Add as many rows as you want (e.g., Rs/R1/Q/phi/W for each cell+SoC).
+% Param names must match exactly between rows (case sensitive).
+P = table( ...
+    ["Rs";  "R1";  "Q";   "phi"; "W"], ...          % Param (string array)
+    [48.54;  639.2;  7.302; 0.696; 0.189], ...        % ThetaHat
+    [1.456; 1.72;  6.768; 1.039; 18.87], ...        % ErrorPct
+    'VariableNames', {'Param','ThetaHat','ErrorPct'} );
+
+%% ---------------- Derived constants ----------------
+nu    = 2*Nfreq - p;
+tcrit = tinv(1 - alpha/2, nu);
+
+%% ---------------- Calculations (no editing needed) ----------------
+% Convert Error% -> assumed SE in native parameter units
+P.SE_Assumed = abs(P.ThetaHat) .* (P.ErrorPct ./ 100);
+
+% Compute CI endpoints
+P.CI_Low  = P.ThetaHat - tcrit .* P.SE_Assumed;
+P.CI_High = P.ThetaHat + tcrit .* P.SE_Assumed;
+
+% CI width metrics
+P.Spread    = P.CI_High - P.CI_Low;     % full width
+P.HalfWidth = 0.5 .* P.Spread;          % ± margin (equals tcrit*SE)
+
+%% ---------------- Display ----------------
+fprintf('PSTrace CI calc (ASSUMPTION: Error%% = 100*SE/|theta_hat|)\n');
+fprintf('Nfreq=%d, p=%d, nu=%d, tcrit=%.6f (two-sided 95%%)\n\n', Nfreq, p, nu, tcrit);
+
+disp(P);
+
+%% ---------------- OPTIONAL: quick helper function (copy/paste workflow) ----------------
+% If you want to process multiple datasets in one run, wrap the block above
+% in a function. You can copy this into a separate file if you want.
+%
+% Usage:
+%   Pout = pstrace_ci_table(Pin, Nfreq, p, alpha);
+%
+% function Pout = pstrace_ci_table(Pin, Nfreq, p, alpha)
+%     nu    = 2*Nfreq - p;
+%     tcrit = tinv(1 - alpha/2, nu);
+%     Pout = Pin;
+%     Pout.SE_Assumed = abs(Pout.ThetaHat) .* (Pout.ErrorPct ./ 100);
+%     Pout.CI_Low     = Pout.ThetaHat - tcrit .* Pout.SE_Assumed;
+%     Pout.CI_High    = Pout.ThetaHat + tcrit .* Pout.SE_Assumed;
+%     Pout.Spread     = Pout.CI_High - Pout.CI_Low;
+%     Pout.HalfWidth  = 0.5 .* Pout.Spread;
+% end
